@@ -26,4 +26,4 @@ Then two check boxes are present :
 - I agree to the Terms and Conditions
 - Subscribe to newsletter
   
-Finally, there is a link "Already have an account? Login"
+Finally, there is the button "Create Account" and the link "Already have an account? Login"
