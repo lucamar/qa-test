@@ -1,29 +1,52 @@
-# qa-test
+# QA Registration – Playwright (Python)
 
-QA Test of the URL: https://qa-test-web-app.vercel.app/index.html
+## Overview
 
-- Test the existing fields on the registration form
-- Confirm if the validations appear correctly
-- Report what happens on successful registration
-- Indicate if any bugs have already been noticed
+This project contains automated tests for the **Registration** feature of the QA Test Web App:
 
-The preferred automation language is Python with Playwright.
+- Manual test design and reporting
+- Automated functional tests for registration using **Playwright + Python**
+- Page Object Model (POM) structure
 
-The registration form is available at the URL https://qa-test-web-app.vercel.app/register.html 
+## Tech stack
 
-The following fields are available in the form:
-- First Name
-- Last Name
-- Email Address
-- Phone Number
-- Street Address
-- City
-- ZIP Code
-- Password
-- Confirm Password
+- Python 3.10+
+- Playwright for Python
+- Pytest
 
-Then two check boxes are present :
-- I agree to the Terms and Conditions
-- Subscribe to newsletter
-  
-Finally, there is the button "Create Account" and the link "Already have an account? Login"
+## Setup
+
+1. **Clone the repository**
+
+```bash
+git clone https://github.com/lucamar/qa-test.git
+cd qa-test
+```
+
+2. Create and activate a Python virtual environment (optional)
+```bash
+python -m venv venv
+source venv/bin/activate 
+```
+
+3. Install dependencies
+```
+pip install -r requirements.txt
+```
+
+4. Install Playwright browsers
+```
+python -m playwright install
+```
+
+## Running tests
+
+### Run all tests
+```
+pytest -v
+```
+
+### Run only registration tests:
+```
+pytest -v tests/test_registration_*.py
+```
