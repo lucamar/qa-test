@@ -2,7 +2,7 @@
 
 QA Test of the URL: https://qa-test-web-app.vercel.app/index.html
 
-- Test the existing fields on the registration form
+- Manual test of the existing fields on the registration form
 - Confirm if the validations appear correctly
 - Report what happens on successful registration
 - Indicate if any bugs have already been noticed
@@ -50,7 +50,7 @@ This includes:
 - Automated testing using Playwright
 
 1.3 Test Environment
-- Browser: Chrome (latest)
+- Browser: Chrome (latest), Firefox (latest)
 - OS: Ubuntu (Linux)
 - Network: Standard broadband
 - Tools: Playwright (Python), GitHub
