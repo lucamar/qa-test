@@ -54,5 +54,3 @@ This includes:
 - OS: Ubuntu (Linux)
 - Network: Standard broadband
 - Tools: Playwright (Python), GitHub
-
-
