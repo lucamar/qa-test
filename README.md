@@ -29,16 +29,17 @@ The goal is to validate the correctness, usability, and robustness of the regist
 ---
 
 ## Project Structure
-
-qa-test/
-├─ pages/
-│  ├─ register_page.py
-├─ tests/
-│  ├─ test_registration_form.py
-│  ├─ test_registration_negative.py
-├─ conftest.py
-├─ requirements.txt
-└─ README.md
+```
+qa-test
+    - pages/
+        - register_page.py
+    - tests/
+        - test_registration_form.py
+        - test_registration_negative.py
+conftest.py
+requirements.txt
+README.md
+```
 
 ---
 
