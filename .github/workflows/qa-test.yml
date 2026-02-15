@@ -1,0 +1,46 @@
+# CI: run tests and upload pytest-html report as artifact
+# Triggers on push and pull_request.
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-html pytest-playwright
+          # install browsers required by Playwright
+          python -m playwright install
+
+      - name: Run tests (generate HTML report)
+        id: run_tests
+        # don't fail the workflow step immediately so we can always upload the report
+        continue-on-error: true
+        run: |
+          mkdir -p reports
+          # run pytest and create a self-contained HTML report
+          pytest -v --html=reports/report.html --self-contained-html
+          echo "PYTEST_EXIT_CODE=$?" >> $GITHUB_ENV
+
+      - name: Upload HTML report artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pytest-html-report
+          path: reports/report.html
+
+      - name: Fail workflow if tests failed
+        if: env.PYTEST_EXIT_CODE != '0'
+        run: |
+          echo "Pytest exited with non-zero exit code: $PYTEST_EXIT_CODE"
+          exit 1
