@@ -4,12 +4,12 @@ from playwright.sync_api import expect
 from pages.register_page import RegisterPage
 
 BASE_VALID_PAYLOAD = {
-    "first_name": "Test",
-    "last_name": "User",
-    "email": "test.user@example.com",
-    "phone": "+15551234567",
-    "address": "123 Test St",
-    "city": "Testville",
+    "first_name": "Hans",
+    "last_name": "Muster",
+    "email": "hans.muster@example.com",
+    "phone": "+385 91 1234567",
+    "address": "Ulica Test",
+    "city": "Testgrad",
     "zip": "12345",
     "password": "P@ssw0rd123",
     "confirm_password": "P@ssw0rd123",

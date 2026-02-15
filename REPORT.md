@@ -96,16 +96,17 @@ TC03|Invalid email format|Failed (Bug‑3)
 TC04|Invalid Phone Number|Failed (Bug‑4)
 TC05|Invalid ZIP Code|Failed (Bug‑5)
 TC06|Password mismatch|Failed (Bug-6)
-TC07|Terms not checked|Passed
+TC07|Terms not checked|Failed (Bug-7)
 TC08|Newsletter optional|Passed
 TC09|Login link navigation|Passed
 TC10|Successful registration|Passed
 TC11|Missing required fields|Passed
+TC12|Duplicate email detected|Passed
 
 Execution Details
-- Total tests executed: 10
-    - Passed: 4
-    - Failed: 6
+- Total tests executed: 12
+    - Passed: 5
+    - Failed: 7
     - Success test: Passed with correct redirect
 - Execution time: ~1 seconds
 - Browser: Chromium (headless)
@@ -118,5 +119,5 @@ However, several validation gaps remain:
 - First and Last Name, email, ZIP Code, phone number are not checked
 - Pasword mismatch not detected
 - Terms and Conditions not checked
-The issues above are documented as bugs in the table with the test cases. 
+The issues above are documented as bugs ifrom 1 to 7 in the table with the test cases. 
 The automation suite accurately reflects both HTML5 validation behavior and the redirect‑based success flow.
