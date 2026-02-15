@@ -3,6 +3,7 @@
 QA Test of the registration form at the URL:
 - [https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
 
+The plan will follow the steps listed below for validation: 
 - Manual test of the existing fields on the registration form
 - Confirm if the validations appear correctly
 - Report what happens on successful registration
@@ -10,7 +11,7 @@ QA Test of the registration form at the URL:
 
 The preferred automation language is Python with Playwright.
 
-The registration form is available at the URL https://qa-test-web-app.vercel.app/register.html
+## Registration form
 
 The following fields are available in the form:
 - First Name
