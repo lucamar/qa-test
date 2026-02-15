@@ -18,7 +18,7 @@ the application redirects to the page `index.html?registered=true`.
 
 ### Manual Test Case
 
-TC01 — Successful Registration
+TC10 — Successful Registration
 
 Preconditions: The user is on the Registration page
 
@@ -36,7 +36,7 @@ Actual Result:
 
 Status: Passed
 
-TC02 — Missing Required Fields
+TC11 — Missing Required Fields
 
 Steps:
 - Leave all fields empty
@@ -103,8 +103,8 @@ TC10|Successful registration|Passed
 TC11|Missing required fields|Passed
 
 Execution Details
-- Total tests executed: 11
-    - Passed: 5
+- Total tests executed: 10
+    - Passed: 4
     - Failed: 6
     - Success test: Passed with correct redirect
 - Execution time: ~1 seconds
@@ -114,4 +114,9 @@ Execution Details
 
 The registration feature correctly redirects users to the success page (index.html?registered=true) when all input data is valid. Automated testing confirms that the success flow works reliably when using proper navigation‑wait handling (expect_navigation).
 
-However, several validation gaps remain (email, ZIP Code, phone number, pasword mismatch, terms not checked), which are documented as defects. The updated automation suite accurately reflects both HTML5 validation behavior and the redirect‑based success flow.
+However, several validation gaps remain:
+- First and Last Name, email, ZIP Code, phone number are not checked
+- Pasword mismatch not detected
+- Terms and Conditions not checked
+The issues above are documented as bugs in the table with the test cases. 
+The automation suite accurately reflects both HTML5 validation behavior and the redirect‑based success flow.

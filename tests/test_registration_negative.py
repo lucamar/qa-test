@@ -1,4 +1,4 @@
-import re
+import uuid
 import pytest
 from playwright.sync_api import expect
 from pages.register_page import RegisterPage
@@ -25,6 +25,7 @@ ERROR_SPAN_IDS = [
 
 
 def _trigger_input_and_blur(locator):
+    """Trigger input and blur events so client-side validators run."""
     locator.evaluate(
         """el => {
             el.dispatchEvent(new Event('input', { bubbles: true }));
@@ -34,7 +35,15 @@ def _trigger_input_and_blur(locator):
 
 
 def _submit_and_collect_errors(rp: RegisterPage):
+    """
+    Submit the form and collect:
+      - browser validation messages (validationMessage)
+      - text from known error spans
+      - text from #registerMessage
+      - current URL
+    """
     page = rp.page
+    # Attempt submit - we ignore navigation result here
     rp.submit(timeout=1000)
 
     validation_messages = page.evaluate(
@@ -74,26 +83,10 @@ def _has_any_error(signals: dict) -> bool:
     return False
 
 
-@pytest.mark.parametrize(
-    "field,invalid_value,expected_keywords",
-    [
-        # TC01: Invalid First Name format (only letters aA-zZ)
-        ("first_name", "John123!", ["first", "name", "letters", "invalid"]),
-        # TC02: Invalid Last Name format (only letters aA-zZ)
-        ("last_name", "Doe99$", ["last", "name", "letters", "invalid"]),
-        # TC03: Invalid email format (must contain @ and a domain)
-        ("email", "user@invalid", ["@", "email", "domain", "invalid"]),
-        # TC04: Invalid Phone Number (should contain a country code followed by digits)
-        ("phone", "abcd-efg", ["phone", "country", "code", "+", "digits", "invalid"]),
-        # TC05: Invalid ZIP Code (only 4 or 5 digits)
-        ("zip", "12ab", ["zip", "postal", "code", "digit", "invalid"]),
-    ],
-)
-def test_TC01_to_TC05_field_format_validations(register_page: RegisterPage, field: str, invalid_value: str, expected_keywords: list):
+def _run_invalid_field_case(register_page: RegisterPage, field: str, invalid_value: str, expected_keywords: list):
     """
-    TC01 - TC05:
-    Fill the form with one invalid field value (others valid), trigger input/blur events,
-    submit, and require a validation signal that references the field/format.
+    Helper to apply an invalid value to a single field, trigger validators, submit,
+    and assert that a relevant validation/error signal is present.
     """
     rp = register_page
     rp.goto()
@@ -104,7 +97,7 @@ def test_TC01_to_TC05_field_format_validations(register_page: RegisterPage, fiel
     rp.fill_form(payload)
 
     target_loc = rp._one(field)
-    # Ensure invalid value was actually written
+    # Ensure the invalid value was set
     assert target_loc.input_value() == invalid_value, f"Could not set invalid value for '{field}'"
 
     _trigger_input_and_blur(target_loc)
@@ -119,24 +112,105 @@ def test_TC01_to_TC05_field_format_validations(register_page: RegisterPage, fiel
     browser_msgs = " ".join([f"{vm['name']} {vm['message']}".lower() for vm in signals["validation_messages"]])
     combined_text = " ".join([span_texts, reg_msg, browser_msgs])
 
-    # Must have at least one validation signal
+    # Must detect at least one error signal
     assert _has_any_error(signals), (
         f"Invalid input for '{field}' did not produce any validation signal. "
         f"Value='{invalid_value}', Signals={signals}"
     )
 
-    # Prefer to see at least one expected keyword in the messages to ensure relevance
+    # Prefer to find at least one expected keyword to ensure relevancy
     if not any(kw.lower() in combined_text for kw in expected_keywords):
         pytest.fail(
-            f"Validation occurred for '{field}', but none of expected keywords {expected_keywords} were present in messages. "
-            f"Combined messages: '{combined_text}'"
+            f"Validation occurred for '{field}', but none of the expected keywords {expected_keywords} "
+            f"were found in messages. Combined: '{combined_text}'"
         )
 
 
+# TC01: Invalid First Name format (only letters aA-zZ)
+def test_TC01_invalid_first_name_format(register_page: RegisterPage):
+    _run_invalid_field_case(
+        register_page,
+        field="first_name",
+        invalid_value="John123!",
+        expected_keywords=["first", "name", "letters", "invalid"],
+    )
+
+
+# TC02: Invalid Last Name format (only letters aA-zZ)
+def test_TC02_invalid_last_name_format(register_page: RegisterPage):
+    _run_invalid_field_case(
+        register_page,
+        field="last_name",
+        invalid_value="Doe99$",
+        expected_keywords=["last", "name", "letters", "invalid"],
+    )
+
+
+# TC03: Invalid email format (must contain @ and a domain)
+def test_TC03_invalid_email_format(register_page: RegisterPage):
+    """
+    Generates a randomized invalid email string to avoid 'User already exists' server message.
+    The generated value includes '@' and a domain-like part but lacks a proper TLD,
+    e.g. '<random>@invalid', which should exercise the client-side/email-format validation
+    without colliding with existing users.
+    """
+    rp = register_page
+    rp.goto()
+
+    # random local part to avoid existing-email collisions
+    local = uuid.uuid4().hex[:8]
+    invalid_email = f"{local}@invalid"  # contains '@' and a domain-like part but no TLD
+
+    payload = BASE_VALID_PAYLOAD.copy()
+    payload["email"] = invalid_email
+
+    rp.fill_form(payload)
+
+    # confirm it was set correctly
+    email_loc = rp._one("email")
+    assert email_loc.input_value() == invalid_email, f"Failed to set randomized invalid email: {invalid_email}"
+
+    _trigger_input_and_blur(email_loc)
+    rp.page.wait_for_timeout(200)
+
+    rp.check_terms()
+
+    signals = _submit_and_collect_errors(rp)
+
+    # validate we got an email-related validation signal
+    span_texts = " ".join(signals["span_errors"].values()).lower()
+    reg_msg = signals["register_message"].lower()
+    browser_msgs = " ".join([f"{vm['name']} {vm['message']}".lower() for vm in signals["validation_messages"]])
+    combined_text = " ".join([span_texts, reg_msg, browser_msgs])
+
+    assert _has_any_error(signals), f"Randomized invalid email '{invalid_email}' did not produce any validation signal. Signals: {signals}"
+    assert any(kw in combined_text for kw in ["@", "email", "domain", "invalid"]), (
+        f"Email validation occurred but messages did not reference expected keywords. Combined: '{combined_text}'"
+    )
+
+
+# TC04: Invalid Phone Number (should contain a country code followed by digits)
+def test_TC04_invalid_phone_number(register_page: RegisterPage):
+    _run_invalid_field_case(
+        register_page,
+        field="phone",
+        invalid_value="abcd-efg",
+        expected_keywords=["phone", "country", "code", "+", "digits", "invalid"],
+    )
+
+
+# TC05: Invalid ZIP Code (only 4 or 5 digits)
+def test_TC05_invalid_zip_code(register_page: RegisterPage):
+    _run_invalid_field_case(
+        register_page,
+        field="zip",
+        invalid_value="12ab",
+        expected_keywords=["zip", "postal", "code", "digit", "invalid"],
+    )
+
+
+# TC06: Password mismatch (password and confirm_password must be identical)
 def test_TC06_password_mismatch(register_page: RegisterPage):
-    """
-    TC06: Password mismatch (password and confirm_password must be identical)
-    """
     rp = register_page
     rp.goto()
 
@@ -171,10 +245,8 @@ def test_TC06_password_mismatch(register_page: RegisterPage):
     ), f"Password mismatch produced signals but none referenced password/mismatch. Signals: {signals}"
 
 
+# TC07: Terms not checked (Terms and Conditions checkbox must be checked)
 def test_TC07_terms_not_checked(register_page: RegisterPage):
-    """
-    TC07: Terms not checked (Terms and Conditions checkbox must be checked)
-    """
     rp = register_page
     rp.goto()
 
@@ -196,10 +268,8 @@ def test_TC07_terms_not_checked(register_page: RegisterPage):
     )
 
 
+# TC08: Newsletter optional (not checking newsletter should NOT block submission)
 def test_TC08_newsletter_optional(register_page: RegisterPage):
-    """
-    TC08: Newsletter optional (not checking newsletter should NOT block submission)
-    """
     rp = register_page
     rp.goto()
 
@@ -224,11 +294,8 @@ def test_TC08_newsletter_optional(register_page: RegisterPage):
         )
 
 
+# TC09: Login link navigation must bring to the specific login page URL
 def test_TC09_login_link_navigation(register_page: RegisterPage):
-    """
-    TC09: Login link navigation must bring to the login page:
-          https://qa-test-web-app.vercel.app/index.html
-    """
     rp = register_page
     rp.goto()
 

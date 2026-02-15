@@ -30,7 +30,7 @@ The goal is to validate the correctness, usability, and robustness of the regist
 ```
 qa-test
     - pages/
-        - registration_page.py
+        - register_page.py
     - tests/
         - test_registration_form.py
         - test_registration_negative.py
@@ -74,7 +74,7 @@ python -m playwright install
 
 Run all tests:
 ```bash
-pytest -v
+pytest -v --html=reports/report.html --self-contained-html
 ```
 
 Run only registration tests:
@@ -83,11 +83,11 @@ pytest -v tests/test_registration_*.py
 ```
 
 ### Key Implementation Details
-✔ Page Object Model (POM)
 
-All UI interactions are encapsulated in the pages/ directory.
-Selectors use stable IDs and unique placeholders to avoid strict‑mode conflicts.
-✔ HTML5 Validation Support
+- Page Object Model (POM)
+    - All UI interactions are encapsulated in the pages/ directory.
+    - Selectors use stable IDs and unique placeholders to avoid strict‑mode conflicts
+- HTML5 Validation Support
 
 The application uses native browser validation for:
 - Required fields
@@ -97,9 +97,7 @@ Tests detect this using:
 ```python
 page.locator("input:invalid").first
 ```
-
 This ensures accurate and fast validation checks.
-✔ Optimized Test Execution
 
 To avoid unnecessary waiting:
 - The Register button is clicked using a direct DOM click:
@@ -126,7 +124,6 @@ The success test uses:
 with page.expect_navigation(url="**/index.html?registered=true"):
     registration.submit()
 ```
-
 This ensures Playwright waits for the redirect correctly.
 
 What Is Tested?

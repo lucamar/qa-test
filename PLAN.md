@@ -28,6 +28,26 @@ Then two check boxes are present :
 
 Finally, there is the button "Create Account" and the link "Already have an account? Login"
 
+## Test Coverage
+
+Positive Scenario
+- Successful registration with valid data
+- Verified via redirect to index.html?registered=true
+
+Negative Scenario
+- Missing required fields
+- Invalid First and Last Name format
+- Invalid ZIP and phone number
+- Invalid email format
+- Password mismatch
+- Terms & Conditions not checked
+- Newsletter checkbox optional
+- Navigation to Login page
+
+Notes
+- The test suite is designed to be stable, fast, and easy to extend.
+- HTML5 validation behavior is intentionally respected and tested.
+
 # Test Plan
 
 The scope of testing covers the user registration process at the URL https://qa-test-web-app.vercel.app/register.html
