@@ -1,0 +1,47 @@
+# Manual deploy of the HTML report to GitHub Pages.
+# Use the workflow_dispatch input "deploy_branch" to choose the source branch (default: main).
+on:
+  workflow_dispatch:
+    inputs:
+      deploy_branch:
+        description: 'Branch to run tests from and deploy report'
+        required: true
+        default: 'main'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.deploy_branch }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest pytest-html pytest-playwright
+          python -m playwright install
+
+      - name: Run tests (generate HTML report)
+        run: |
+          mkdir -p reports
+          pytest -v --html=reports/report.html --self-contained-html
+
+      - name: Prepare report for GitHub Pages (index.html)
+        run: |
+          # Ensure the report will be served at repository root by making it index.html
+          cp reports/report.html reports/index.html
+
+      - name: Deploy reports/ to gh-pages branch (GitHub Pages)
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./reports
+          # optional: specify a custom publish_branch (default: gh-pages)
+          # publish_branch: gh-pages
