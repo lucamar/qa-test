@@ -5,7 +5,7 @@
 on:
   push:
     branches:
-      - master
+      - main
   workflow_dispatch:
 
 permissions:
@@ -47,11 +47,8 @@ jobs:
 
           # Ensure a report file exists (if pytest failed to produce one, create a placeholder)
           if [ ! -f reports/report.html ]; then
-            cat > reports/report.html <<'HTML'
-<!doctype html>
-<html><head><meta charset="utf-8"><title>No report</title></head>
-<body><h1>No pytest-html report was generated</h1></body></html>
-HTML
+            # Use printf to avoid heredoc YAML quoting issues
+            printf '%s\n' '<!doctype html>' '<html>' '<head>' '<meta charset="utf-8">' '<title>No report</title>' '</head>' '<body>' '<h1>No pytest-html report was generated</h1>' '</body>' '</html>' > reports/report.html
           fi
 
           # Create a stable timestamp and export it for later steps
@@ -103,7 +100,6 @@ HTML
           # Ensure remote uses token auth for push
           git remote set-url origin "https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git"
 
-          # Copy the generated reports from the workspace into the working tree (they are already present)
           # Stage only the reports directory so other files are untouched
           git add -A reports
 
