@@ -8,11 +8,9 @@ https://qa-test-web-app.vercel.app/register.html
 
 The suite includes:
 
-- Manual test design and reporting
+- Manual test design and reporting as described in the [PLAN](PLAN)
 - Automated functional tests using **Playwright + Python**
 - Page Object Model (POM)
-- Optimized selectors and fast execution strategies
-- Support for both HTML5 validation and custom DOM validation
 - Correct handling of redirect-based success flow
 
 The goal is to validate the correctness, usability, and robustness of the registration flow.
@@ -32,7 +30,7 @@ The goal is to validate the correctness, usability, and robustness of the regist
 ```
 qa-test
     - pages/
-        - register_page.py
+        - registration_page.py
     - tests/
         - test_registration_form.py
         - test_registration_negative.py

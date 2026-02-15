@@ -30,8 +30,6 @@ Finally, there is the button "Create Account" and the link "Already have an acco
 
 # Test Plan
 
-1.1 Scope
-
 The scope of testing covers the user registration process at the URL https://qa-test-web-app.vercel.app/register.html
 
 This includes:
@@ -41,16 +39,17 @@ This includes:
 - Successful account creation
 - Links and checkboxes
 
-1.2 Testing Types
+Testing Types
 - Functional testing
 - Negative testing
-- Boundary testing
 - Usability checks
 - Cross-browser testing (Chrome, Firefox, ...)
 - Automated testing using Playwright
 
-1.3 Test Environment
+Test Environment
 - Browser: Chrome (latest), Firefox (latest)
 - OS: Ubuntu (Linux)
 - Network: Standard broadband
-- Tools: Playwright (Python), GitHub
+- Tools: Playwright (Python), pytest, GitHub
+
+Please check the [REPORT](REPORT.md) to view the outcome of the tests.
