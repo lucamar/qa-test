@@ -269,5 +269,6 @@ However, several validation gaps remain:
 - First and Last Name, email, ZIP Code, phone number are not checked
 - Pasword mismatch is not detected on the form
 - Terms and Conditions not checked is accepted
+
 The issues above are documented as bugs from 1 to 7 in the table with the test cases. 
 The automation suite accurately reflects both HTML5 validation behavior and the redirect‑based success flow.
