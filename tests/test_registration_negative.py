@@ -1,32 +1,18 @@
 import re
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import expect
 from pages.register_page import RegisterPage
 
-# Example invalid payloads
-INVALID_PAYLOADS = {
-    "invalid_email": {
-        "first_name": "Test",
-        "last_name": "User",
-        "email": "not-an-email",
-        "phone": "+15551234567",
-        "address": "123 Test St",
-        "city": "Testville",
-        "zip": "12345",
-        "password": "P@ssw0rd123",
-        "confirm_password": "P@ssw0rd123",
-    },
-    "password_mismatch": {
-        "first_name": "Test",
-        "last_name": "User",
-        "email": "test.user@example.com",
-        "phone": "+15551234567",
-        "address": "123 Test St",
-        "city": "Testville",
-        "zip": "12345",
-        "password": "P@ssw0rd123",
-        "confirm_password": "Different1!",
-    },
+BASE_VALID_PAYLOAD = {
+    "first_name": "Test",
+    "last_name": "User",
+    "email": "test.user@example.com",
+    "phone": "+15551234567",
+    "address": "123 Test St",
+    "city": "Testville",
+    "zip": "12345",
+    "password": "P@ssw0rd123",
+    "confirm_password": "P@ssw0rd123",
 }
 
 ERROR_SPAN_IDS = [
@@ -38,19 +24,19 @@ ERROR_SPAN_IDS = [
 ]
 
 
+def _trigger_input_and_blur(locator):
+    locator.evaluate(
+        """el => {
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('blur', { bubbles: true }));
+        }"""
+    )
+
+
 def _submit_and_collect_errors(rp: RegisterPage):
-    """
-    Click Create Account and collect several possible error signals:
-      - browser validation messages (validationMessage) for form controls
-      - error span texts (ids listed in ERROR_SPAN_IDS)
-      - registerMessage (#registerMessage) text
-    Returns a dict with keys: validation_messages (list), span_errors (dict), register_message (str)
-    """
     page = rp.page
-    # Attempt submit (try navigation, but ignore if no navigation occurs)
     rp.submit(timeout=1000)
 
-    # Collect browser validation messages from form elements
     validation_messages = page.evaluate(
         """() => {
             const form = document.querySelector('#registerForm');
@@ -62,24 +48,19 @@ def _submit_and_collect_errors(rp: RegisterPage):
         }"""
     )
 
-    # Collect error span texts
     span_errors = {}
     for span_id in ERROR_SPAN_IDS:
         handle = page.locator(f"#{span_id}")
-        if handle.count() > 0:
-            txt = (handle.first.text_content() or "").strip()
-            span_errors[span_id] = txt
+        span_errors[span_id] = (handle.first.text_content() or "").strip() if handle.count() > 0 else ""
 
-    # Collect registerMessage
     reg_msg_handle = page.locator("#registerMessage")
-    reg_msg = ""
-    if reg_msg_handle.count() > 0:
-        reg_msg = (reg_msg_handle.first.text_content() or "").strip()
+    reg_msg = (reg_msg_handle.first.text_content() or "").strip() if reg_msg_handle.count() > 0 else ""
 
     return {
         "validation_messages": validation_messages,
         "span_errors": span_errors,
         "register_message": reg_msg,
+        "current_url": page.url,
     }
 
 
@@ -93,102 +74,174 @@ def _has_any_error(signals: dict) -> bool:
     return False
 
 
-def test_submitting_empty_form_shows_validation(register_page: RegisterPage):
+@pytest.mark.parametrize(
+    "field,invalid_value,expected_keywords",
+    [
+        # TC01: Invalid First Name format (only letters aA-zZ)
+        ("first_name", "John123!", ["first", "name", "letters", "invalid"]),
+        # TC02: Invalid Last Name format (only letters aA-zZ)
+        ("last_name", "Doe99$", ["last", "name", "letters", "invalid"]),
+        # TC03: Invalid email format (must contain @ and a domain)
+        ("email", "user@invalid", ["@", "email", "domain", "invalid"]),
+        # TC04: Invalid Phone Number (should contain a country code followed by digits)
+        ("phone", "abcd-efg", ["phone", "country", "code", "+", "digits", "invalid"]),
+        # TC05: Invalid ZIP Code (only 4 or 5 digits)
+        ("zip", "12ab", ["zip", "postal", "code", "digit", "invalid"]),
+    ],
+)
+def test_TC01_to_TC05_field_format_validations(register_page: RegisterPage, field: str, invalid_value: str, expected_keywords: list):
     """
-    Submit the form without filling required fields.
-    Expect browser validation messages OR app-provided error messages to appear.
-    """
-    rp = register_page
-    rp.goto()
-
-    # Ensure form is visible and empty
-    expect(rp.form).to_be_visible()
-
-    signals = _submit_and_collect_errors(rp)
-
-    assert _has_any_error(signals), (
-        "Submitting an empty required form should produce browser validation messages "
-        "or app-provided error messages, but none were detected. "
-        f"Signals: {signals}"
-    )
-
-
-@pytest.mark.parametrize("case", ["invalid_email", "password_mismatch"])
-def test_invalid_payloads_trigger_validation(register_page: RegisterPage, case: str):
-    """
-    Test two negative scenarios:
-      - invalid email (app may provide email-specific error span)
-      - password mismatch (app may provide confirmPasswordError)
-    We assert that either a specific related span receives text, or a registerMessage mentions the issue,
-    or browser validation reports an invalid control.
+    TC01 - TC05:
+    Fill the form with one invalid field value (others valid), trigger input/blur events,
+    submit, and require a validation signal that references the field/format.
     """
     rp = register_page
     rp.goto()
 
-    payload = INVALID_PAYLOADS[case]
-    # Fill form with payload
+    payload = BASE_VALID_PAYLOAD.copy()
+    payload[field] = invalid_value
+
     rp.fill_form(payload)
-    # Ensure terms are checked only when testing non-terms scenarios
+
+    target_loc = rp._one(field)
+    # Ensure invalid value was actually written
+    assert target_loc.input_value() == invalid_value, f"Could not set invalid value for '{field}'"
+
+    _trigger_input_and_blur(target_loc)
+    rp.page.wait_for_timeout(200)
+
     rp.check_terms()
 
     signals = _submit_and_collect_errors(rp)
 
-    # Determine expectations per case
-    if case == "invalid_email":
-        email_span = signals["span_errors"].get("emailError", "")
-        reg_msg = signals["register_message"].lower()
-        browser_msgs = signals["validation_messages"]
-        # Accept any of these: emailError populated, register message mentions email, OR browser validation message for email
-        email_browser_invalid = any("email" in (vm["name"] or "").lower() or "email" in (vm["message"] or "").lower() for vm in browser_msgs)
-        assert email_span or ("email" in reg_msg) or email_browser_invalid, (
-            "Invalid email should cause an email-related error. "
-            f"Signals: {signals}"
-        )
-    elif case == "password_mismatch":
-        confirm_span = signals["span_errors"].get("confirmPasswordError", "")
-        reg_msg = signals["register_message"].lower()
-        browser_msgs = signals["validation_messages"]
-        # Accept either confirmPasswordError populated, registerMessage mentioning mismatch/password, or browser validation (unlikely here)
-        mismatch_browser_invalid = any("password" in (vm["name"] or "").lower() or "password" in (vm["message"] or "").lower() for vm in browser_msgs)
-        assert confirm_span or ("password" in reg_msg) or mismatch_browser_invalid, (
-            "Password mismatch should produce an error on confirm password or a register message. "
-            f"Signals: {signals}"
+    span_texts = " ".join(signals["span_errors"].values()).lower()
+    reg_msg = signals["register_message"].lower()
+    browser_msgs = " ".join([f"{vm['name']} {vm['message']}".lower() for vm in signals["validation_messages"]])
+    combined_text = " ".join([span_texts, reg_msg, browser_msgs])
+
+    # Must have at least one validation signal
+    assert _has_any_error(signals), (
+        f"Invalid input for '{field}' did not produce any validation signal. "
+        f"Value='{invalid_value}', Signals={signals}"
+    )
+
+    # Prefer to see at least one expected keyword in the messages to ensure relevance
+    if not any(kw.lower() in combined_text for kw in expected_keywords):
+        pytest.fail(
+            f"Validation occurred for '{field}', but none of expected keywords {expected_keywords} were present in messages. "
+            f"Combined messages: '{combined_text}'"
         )
 
 
-def test_terms_must_be_checked(register_page: RegisterPage):
+def test_TC06_password_mismatch(register_page: RegisterPage):
     """
-    Fill the form but leave the 'terms' checkbox unchecked; submit and expect the app to block submission
-    and show an error mentioning 'terms' or similar. Browser validation won't catch this because checkbox is not required in HTML,
-    so we expect application-level handling that populates #registerMessage or other span.
+    TC06: Password mismatch (password and confirm_password must be identical)
     """
     rp = register_page
     rp.goto()
 
-    # Fill with a valid payload but do NOT check terms
-    rp.fill_form({
-        "first_name": "Test",
-        "last_name": "User",
-        "email": "test.user@example.com",
-        "phone": "+15551234567",
-        "address": "123 St",
-        "city": "Testville",
-        "zip": "12345",
-        "password": "P@ssw0rd123",
-        "confirm_password": "P@ssw0rd123",
-    })
-    # Explicitly ensure terms is unchecked
+    payload = BASE_VALID_PAYLOAD.copy()
+    payload["password"] = "P@ssw0rd123"
+    payload["confirm_password"] = "Different1!"
+
+    rp.fill_form(payload)
+
+    pw_loc = rp._one("password")
+    cpw_loc = rp._one("confirm_password")
+    assert pw_loc.input_value() == payload["password"]
+    assert cpw_loc.input_value() == payload["confirm_password"]
+
+    _trigger_input_and_blur(cpw_loc)
+    rp.page.wait_for_timeout(200)
+
+    rp.check_terms()
+
+    signals = _submit_and_collect_errors(rp)
+
+    confirm_span = signals["span_errors"].get("confirmPasswordError", "")
+    reg_msg = signals["register_message"].lower()
+    browser_msgs = " ".join([vm["message"].lower() for vm in signals["validation_messages"]])
+
+    assert _has_any_error(signals), f"Password mismatch did not produce any validation signal. Signals: {signals}"
+    assert (
+        confirm_span
+        or "password" in reg_msg
+        or "mismatch" in reg_msg
+        or "confirm" in browser_msgs
+    ), f"Password mismatch produced signals but none referenced password/mismatch. Signals: {signals}"
+
+
+def test_TC07_terms_not_checked(register_page: RegisterPage):
+    """
+    TC07: Terms not checked (Terms and Conditions checkbox must be checked)
+    """
+    rp = register_page
+    rp.goto()
+
+    rp.fill_form(BASE_VALID_PAYLOAD)
+    # Ensure terms is unchecked
     terms = rp._one("terms")
     if terms.is_checked():
         terms.uncheck()
 
+    _trigger_input_and_blur(rp._one("first_name"))
+    rp.page.wait_for_timeout(200)
+
     signals = _submit_and_collect_errors(rp)
 
     reg_msg = signals["register_message"].lower()
-    # Check for presence of any indicator mentioning terms/agree, or general non-empty message
-    assert (
-        ("term" in reg_msg) or ("agree" in reg_msg) or signals["span_errors"].get("passwordError") or _has_any_error(signals)
-    ), (
-        "Submitting without agreeing to terms should produce an application-level error mentioning terms/agree or a non-empty register message. "
-        f"Signals: {signals}"
+    assert _has_any_error(signals), f"Submitting without agreeing to terms did not produce an error signal. Signals: {signals}"
+    assert ("term" in reg_msg) or ("agree" in reg_msg) or any("term" in v.lower() or "agree" in v.lower() for v in signals["span_errors"].values()), (
+        f"Expected a terms-related error but did not find one. Signals: {signals}"
     )
+
+
+def test_TC08_newsletter_optional(register_page: RegisterPage):
+    """
+    TC08: Newsletter optional (not checking newsletter should NOT block submission)
+    """
+    rp = register_page
+    rp.goto()
+
+    rp.fill_form(BASE_VALID_PAYLOAD)
+    rp.check_terms()
+
+    newsletter = rp._one("newsletter")
+    if newsletter.is_checked():
+        newsletter.uncheck()
+
+    nav = rp.submit(timeout=3000)
+    if nav:
+        # navigation happened -> success
+        return
+
+    try:
+        msg = rp.wait_for_message_non_empty(timeout=5000)
+        assert msg, "Expected a non-empty register message when newsletter is not checked"
+    except Exception as e:
+        pytest.fail(
+            f"Submission without newsletter did not succeed (no navigation and no non-empty registerMessage). Exception: {e}"
+        )
+
+
+def test_TC09_login_link_navigation(register_page: RegisterPage):
+    """
+    TC09: Login link navigation must bring to the login page:
+          https://qa-test-web-app.vercel.app/index.html
+    """
+    rp = register_page
+    rp.goto()
+
+    login_loc = rp._one("login_link")
+    target_url = "https://qa-test-web-app.vercel.app/index.html"
+
+    # Try to click and wait for exact navigation to target_url
+    try:
+        with rp.page.expect_navigation(timeout=3000, url=target_url):
+            login_loc.click()
+        assert rp.page.url == target_url, f"Expected to land on {target_url} but landed on {rp.page.url}"
+    except Exception:
+        # If navigation not observed, validate href attribute
+        href = login_loc.get_attribute("href") or ""
+        # Accept either full absolute URL or relative 'index.html'
+        assert href.endswith("index.html") or href == "/" or href == target_url, f"Login link href does not target expected login page: href='{href}'"

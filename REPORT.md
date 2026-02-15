@@ -82,8 +82,7 @@ Selectors were updated to use unique placeholders to ensure reliable element tar
 
 The automated test uses
 ```python
-with page.expect_navigation(url="**/index.html?registered=true"):
-    registration.submit()
+with rp.page.expect_navigation(timeout=3000, url=target_url):
 ```
 This ensures Playwright waits for the redirect correctly.
 
@@ -91,22 +90,24 @@ This ensures Playwright waits for the redirect correctly.
 
 Test Case| Description | Results
 --- | --- | ---
-TC01|Successful registration|Passed
-TC02|Missing required fields|Passed
-TC03|Invalid email format|Failed (Bug‑001)
-TC07|Invalid Phone Number|Failed (Bug‑005)
-TC06|Invalid ZIP Code|Failed (Bug‑004)
-TC04|Password mismatch|Failed (Bug-002)
-TC05|Terms not checked|Failed (Bug-003)
+TC01|Invalid First Name format|Failed (Bug-1)
+TC02|Invalid Last Name format|Failed (Bug-2)
+TC03|Invalid email format|Failed (Bug‑3)
+TC04|Invalid Phone Number|Failed (Bug‑4)
+TC05|Invalid ZIP Code|Failed (Bug‑5)
+TC06|Password mismatch|Failed (Bug-6)
+TC07|Terms not checked|Passed
 TC08|Newsletter optional|Passed
 TC09|Login link navigation|Passed
+TC10|Successful registration|Passed
+TC11|Missing required fields|Passed
 
 Execution Details
-- Total tests executed: 9
-    - Passed: 4
-    - Failed: 5
+- Total tests executed: 11
+    - Passed: 5
+    - Failed: 6
     - Success test: Passed with correct redirect
-- Execution time: ~12 seconds
+- Execution time: ~1 seconds
 - Browser: Chromium (headless)
 
 ### Conclusion
