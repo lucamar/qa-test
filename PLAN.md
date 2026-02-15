@@ -1,7 +1,7 @@
 # Introduction
 
 QA Test of the registration form at the URL:
-- [https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
+- [https://qa-test-web-app.vercel.app/register.html](https://qa-test-web-app.vercel.app/register.html)
 
 The plan will follow the steps listed below for validation: 
 - Manual test of the existing fields on the registration form

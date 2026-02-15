@@ -1,7 +1,7 @@
 # Report
 
-This document reports the outcome of manual and tomated tests of the registration form at the URL:
-- [https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
+This document reports the outcome of manual and automated tests of the registration form at the URL:
+- [https://qa-test-web-app.vercel.app/register.html](https://qa-test-web-app.vercel.app/register.html)
 
 ## Successful Registration
 
