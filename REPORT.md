@@ -1,6 +1,8 @@
-1. Acceptance Criteria
+# Report
 
-Successful Registration
+## Acceptance Criteria
+
+### Successful Registration
 
 A user should be successfully registered when:
 - All required fields are filled with valid data
@@ -14,7 +16,7 @@ Expected Behavior:
 After submission, the browser navigates to the success page with the query parameter `registered=true`: 
 the application redirects to the page `index.html?registered=true`.
 
-2. Manual Test Case
+### Manual Test Case
 
 TC01 — Successful Registration
 
@@ -73,11 +75,10 @@ Status: Failed
 
 TC04 - Password mismatch
 
-
 The Password and Confirm Password fields share similar labels, causing strict‑mode ambiguity in Playwright. 
 Selectors were updated to use unique placeholders to ensure reliable element targeting.
 
-3. Automation Execution Summary
+### Automation Execution Summary
 
 The automated test uses
 ```python
@@ -86,17 +87,19 @@ with page.expect_navigation(url="**/index.html?registered=true"):
 ```
 This ensures Playwright waits for the redirect correctly.
 
-Test Execution Table
-Test Case	Description	Result
-TC01	Successful registration	Passed
-TC02	Missing required fields	Passed
-TC03	Invalid email format	Failed (Bug‑001)
-TC04	Password mismatch	Failed (Bug-002)
-TC05	Terms not checked	Failed (Bug-003)
-TC06	Invalid ZIP Code	Failed (Bug‑004)
-TC07	Invalid Phone Number	Failed (Bug‑005)
-TC08	Newsletter optional	Passed
-TC09	Login link navigation	Passed
+### Test Execution
+
+Test Case| Description | Results
+--- | --- | ---
+TC01|Successful registration|Passed
+TC02|Missing required fields|Passed
+TC03|Invalid email format|Failed (Bug‑001)
+TC07|Invalid Phone Number|Failed (Bug‑005)
+TC06|Invalid ZIP Code|Failed (Bug‑004)
+TC04|Password mismatch|Failed (Bug-002)
+TC05|Terms not checked|Failed (Bug-003)
+TC08|Newsletter optional|Passed
+TC09|Login link navigation|Passed
 
 Execution Details
 - Total tests executed: 9
@@ -106,7 +109,7 @@ Execution Details
 - Execution time: ~12 seconds
 - Browser: Chromium (headless)
 
-4. Conclusion (Updated)
+### Conclusion
 
 The registration feature correctly redirects users to the success page (index.html?registered=true) when all input data is valid. Automated testing confirms that the success flow works reliably when using proper navigation‑wait handling (expect_navigation).
 
