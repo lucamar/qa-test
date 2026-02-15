@@ -259,6 +259,8 @@ Execution Details
 - Execution time: ~ 40 seconds
 - Browser: Chromium (headless)
 
+The HTML report created by `pytest` is saved as artifact in the project and it can be inspected under the folder [report](report).
+
 ### Conclusion
 
 The registration feature correctly redirects users to the success page (index.html?registered=true) when all input data is valid. Automated testing confirms that the success flow works reliably when using proper navigation‑wait handling (expect_navigation).
