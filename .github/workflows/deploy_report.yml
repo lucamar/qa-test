@@ -1,45 +1,95 @@
-# Manual deploy of the HTML report to GitHub Pages.
-# Use the workflow_dispatch input "deploy_branch" to choose the source branch (default: main).
+# Run tests, generate pytest-html report, and commit it into the reports/ folder on master
 on:
+  push:
+    branches:
+      - main
   workflow_dispatch:
-    inputs:
-      deploy_branch:
-        description: 'Branch to run tests from and deploy report'
-        required: true
-        default: 'master'
+
+permissions:
+  contents: write
 
 jobs:
-  build-and-deploy:
+  run-tests-and-publish-report:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout
+      - name: Checkout repository (fetch all history)
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.deploy_branch }}
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install pytest pytest-html pytest-playwright
+          # install Playwright browsers
           python -m playwright install
 
-      - name: Run tests (generate HTML report)
+      - name: Run tests and generate pytest-html report
+        id: run_tests
+        continue-on-error: true
         run: |
           mkdir -p reports
-          pytest -v --html=reports/report.html --self-contained-html
+          # generate a self-contained HTML report
+          pytest -q --html=reports/report.html --self-contained-html || echo "pytest exit code: $?"
+          # also copy to index.html for convenience (optional)
+          cp -f reports/report.html reports/index.html
+          echo "Report files generated:"
+          ls -la reports
+          echo "PYTEST_EXIT_CODE=$?" >> $GITHUB_ENV
 
-      - name: Prepare report for GitHub Pages (index.html)
+      - name: Prepare git commit on master (update reports/)
+        # commit report files to master branch without replacing other files
         run: |
-          # Ensure the report will be served at repository root by making it index.html
-          cp reports/report.html reports/index.html
+          set -e
+          # configure git author
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
 
-      - name: Deploy reports/ to master branch (GitHub Pages)
-        uses: peaceiris/actions-master@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./reports
+          # ensure we have a remote master reference
+          git fetch origin master || true
+
+          # If master exists remotely, create/update local master tracking it; otherwise create branch master
+          if git rev-parse --verify origin/master >/dev/null 2>&1; then
+            # create or reset local master to origin/master
+            git checkout master || git checkout -b master origin/master
+            git reset --mixed origin/master
+          else
+            # master doesn't exist yet -> create it from current HEAD (main)
+            git checkout -b master
+          fi
+
+          # Copy generated report files from the workspace (the checkout) into the repo working tree.
+          # The reports/ directory is already in the workspace; ensure it exists
+          mkdir -p reports
+          cp -f reports/report.html reports/index.html
+
+          # Stage only the reports/ directory (so other files in master are untouched)
+          git add -A reports
+
+          # Commit only if there are changes
+          if git diff --cached --quiet; then
+            echo "No changes to reports/ to commit."
+          else
+            git commit -m "Publish pytest-html report: $GITHUB_SHA"
+            # push to master
+            git push origin master
+          fi
+
+      - name: Debug: list master root and reports folder (post-push)
+        run: |
+          echo "Current branch:"
+          git branch --show-current || true
+          echo "Files at repo root (master branch):"
+          ls -la
+          echo "reports/ content:"
+          ls -la reports || true
+
+      - name: Print report URL hint
+        run: |
+          echo "If GitHub Pages is configured to serve files from the master branch root, the report should be available at:"
+          echo "https://$GITHUB_REPOSITORY_OWNER.github.io/$GITHUB_REPOSITORY/reports/report.html"
