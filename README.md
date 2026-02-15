@@ -3,11 +3,11 @@
 ## Overview
 
 This project contains automated tests for the **Registration** feature of the QA Test Web App: 
-[https://qa-test-web-app.vercel.app/register.html](https://qa-test-web-app.vercel.app/register.html)
+- [https://qa-test-web-app.vercel.app/register.html](https://qa-test-web-app.vercel.app/register.html)
 
 The suite includes:
 
-- Manual test design described in [PLAN](PLAN)
+- Manual test design described in [PLAN](PLAN.md)
 - Automated functional tests using **Playwright + Python**
 - Page Object Model (POM)
 - Correct handling of redirect-based success flow

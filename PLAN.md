@@ -1,7 +1,7 @@
 # Introduction
 
 QA Test of the registration form at the URL:
-[https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
+- [https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
 
 - Manual test of the existing fields on the registration form
 - Confirm if the validations appear correctly
