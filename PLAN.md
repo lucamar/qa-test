@@ -1,6 +1,7 @@
 # Introduction
 
-QA Test of the URL: https://qa-test-web-app.vercel.app/index.html
+QA Test of the registration form at the URL:
+[https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
 
 - Manual test of the existing fields on the registration form
 - Confirm if the validations appear correctly
@@ -32,10 +33,15 @@ Finally, there is the button "Create Account" and the link "Already have an acco
 
 Positive Scenario
 - Successful registration with valid data
-- Verified via redirect to index.html?registered=true
+- Missing required fields are not accepted
+- Duplicate email is detected and reported
+
+Successful registration should redirect to:
+```
+/index.html?registered=true
+```
 
 Negative Scenario
-- Missing required fields
 - Invalid First and Last Name format
 - Invalid ZIP and phone number
 - Invalid email format
@@ -48,7 +54,7 @@ Notes
 - The test suite is designed to be stable, fast, and easy to extend.
 - HTML5 validation behavior is intentionally respected and tested.
 
-# Test Plan
+## Test Plan
 
 The scope of testing covers the user registration process at the URL https://qa-test-web-app.vercel.app/register.html
 
@@ -63,13 +69,31 @@ Testing Types
 - Functional testing
 - Negative testing
 - Usability checks
-- Cross-browser testing (Chrome, Firefox, ...)
 - Automated testing using Playwright
 
 Test Environment
-- Browser: Chrome (latest), Firefox (latest)
-- OS: Ubuntu (Linux)
+- Browser: Chromium (headless)
 - Network: Standard broadband
+- OS: Ubuntu (Linux)
 - Tools: Playwright (Python), pytest, GitHub
+
+## Key Implementation Details
+
+- Page Object Model (POM)
+    - All UI interactions are encapsulated in the pages/ directory.
+    - Selectors use stable IDs and unique placeholders to avoid strict‑mode conflicts
+- HTML5 Validation Support
+
+The application uses native browser validation for:
+- Required fields
+- Email format
+This ensures accurate and fast validation checks.
+
+The success test uses:
+```python
+with page.expect_navigation(url="**/index.html?registered=true"):
+    registration.submit()
+```
+This ensures Playwright waits for the redirect correctly.
 
 Please check the [REPORT](REPORT.md) to view the outcome of the tests.

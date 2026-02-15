@@ -1,8 +1,9 @@
 # Report
 
-## Acceptance Criteria
+This document reports the outcome of manual and tomated tests of the registration form at the URL:
+[https://qa-test-web-app.vercel.app/registration.html](https://qa-test-web-app.vercel.app/registration.html)
 
-### Successful Registration
+## Successful Registration
 
 A user should be successfully registered when:
 - All required fields are filled with valid data
@@ -16,7 +17,7 @@ Expected Behavior:
 After submission, the browser navigates to the success page with the query parameter `registered=true`: 
 the application redirects to the page `index.html?registered=true`.
 
-### Manual Test Case
+### Manual Tests
 
 TC10 — Successful Registration
 
@@ -29,12 +30,14 @@ Steps:
 
 Expected Result:
 - Form submits successfully
-- Browser redirects to: https://qa-test-web-app.vercel.app/index.html?registered=true
+- Browser redirects to [https://qa-test-web-app.vercel.app/index.html?registered=true](https://qa-test-web-app.vercel.app/index.html?registered=true)
 
 Actual Result:
 - Redirect occurs as expected
 
 Status: Passed
+
+--- 
 
 TC11 — Missing Required Fields
 
@@ -44,7 +47,7 @@ Steps:
 
 Expected Result:
 - Browser prevents form submission
-- Native HTML5 tooltip appears on the first empty required field: “Please fill in this field”
+- An error message should appear: e.g. “Please fill in this field”
 
 Actual Result:
 - Browser displays native HTML5 validation tooltip
@@ -52,35 +55,180 @@ Actual Result:
 
 Status: Passed
 
-Notes:  
-The application relies on HTML5 required‑field validation, not custom JavaScript validation. 
-This is acceptable behavior and not a defect.
+Notes: The application relies on HTML5 required‑field validation, not custom JavaScript validation. 
+This is an acceptable behaviour and not a defect.
+
+---
+
+TC12 — Duplicate email
+
+Steps:
+- Enter valid data in all required fields
+- Fill in email with one already used
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- Native HTML5 error appears on screen
+
+Actual Result:
+- Browser displays the error message: "User with this email already exists"
+
+Status: Passed
+
+---
+
+TC01 - Invalid First Name format
+
+Steps:
+- Enter valid data in all fields
+- Insert invalid First Name (e.g.: 'John123')
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- An error message should appear: e.g. “Please insert a valid First Name”
+
+Actual Result:
+- The form submission is accepted
+- No error message appears
+
+Status: Failed
+
+---
+
+TC02 - Invalid Last Name format
+
+Steps:
+- Enter valid data in all fields
+- Insert invalid Last Name (e.g.: 'Doe99$')
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- An error message should appear: e.g. “Please insert a valid Last Name”
+
+Actual Result:
+- The form submission is accepted
+- No error message appears
+
+Status: Failed
+
+---
 
 TC03 - Invalid email format
 
 Steps:
 - Enter valid data in all fields
-- Insert invalid email (e.g.: invalid@email)
+- Insert invalid email (e.g.: '<random>@email')
 - Click “Create Account”
 
 Expected Result:
 - Browser prevents form submission
-- A custom validation message should appear on the email field: e.g. “Please insert a valid email”
+- An error message should appear: e.g. “Please insert a valid email”
 
 Actual Result:
 - The form submission is accepted
-- No custom validation messages appear
+- No error message appears
 
 Status: Failed
 
-TC04 - Password mismatch
+---
 
-The Password and Confirm Password fields share similar labels, causing strict‑mode ambiguity in Playwright. 
+TC04 - Invalid phone number
+
+Steps:
+- Enter valid data in all fields
+- Insert invalid phone number (e.g.: 'abcd-efg')
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- An error message appears: e.g. “Please insert a valid phone number”
+
+Actual Result:
+- The form submission is accepted
+- No error message appears
+
+Status: Failed
+
+---
+
+TC05 - Invalid ZIP code
+
+Steps:
+- Enter valid data in all fields
+- Insert invalid ZIP code (e.g.: '12ab')
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- An error message should appear: e.g. “Please insert a valid ZIP code”
+
+Actual Result:
+- The form submission is accepted
+- No errror message appears
+
+Status: Failed
+
+---
+
+TC06 - Password mismatch
+
+Steps:
+- Enter valid data in all fields
+- Insert mismatching strings in "Password" and "Confirm Password" 
+- Click “Create Account”
+
+Expected Result:
+- Browser prevents form submission
+- An error message should appear: e.g. “Passwords do not match”
+
+Actual Result:
+- The form submission is accepted
+- No error message appears
+
+Note: The Password and Confirm Password fields share similar labels, causing strict‑mode ambiguity in Playwright. 
 Selectors were updated to use unique placeholders to ensure reliable element targeting.
 
-### Automation Execution Summary
+---
 
-The automated test uses
+TC08 - Subscribe to newsletter is optional
+
+Steps:
+- Enter valid data in all fields
+- Leave checkbox "Subscribe to newsletter" unchecked
+- Click “Create Account”
+
+Expected Result:
+- Form submits successfully
+- Browser redirects to [https://qa-test-web-app.vercel.app/index.html?registered=true](https://qa-test-web-app.vercel.app/index.html?registered=true)
+
+Actual Result:
+- Redirect occurs as expected
+
+Status: Passed
+
+---
+
+TC09 - Login link navigation
+
+Steps:
+- Click “Already have an account? Login”
+
+Expected Result:
+- Browser redirects to [https://qa-test-web-app.vercel.app/index.html](https://qa-test-web-app.vercel.app/index.html)
+
+Actual Result:
+- Redirect occurs as expected
+
+Status: Passed
+
+---
+
+### Automated Tests
+
+The automated tests use
 ```python
 with rp.page.expect_navigation(timeout=3000, url=target_url):
 ```
@@ -108,7 +256,7 @@ Execution Details
     - Passed: 5
     - Failed: 7
     - Success test: Passed with correct redirect
-- Execution time: ~1 seconds
+- Execution time: ~ 40 seconds
 - Browser: Chromium (headless)
 
 ### Conclusion
@@ -117,7 +265,7 @@ The registration feature correctly redirects users to the success page (index.ht
 
 However, several validation gaps remain:
 - First and Last Name, email, ZIP Code, phone number are not checked
-- Pasword mismatch not detected
-- Terms and Conditions not checked
-The issues above are documented as bugs ifrom 1 to 7 in the table with the test cases. 
+- Pasword mismatch is not detected on the form
+- Terms and Conditions not checked is accepted
+The issues above are documented as bugs from 1 to 7 in the table with the test cases. 
 The automation suite accurately reflects both HTML5 validation behavior and the redirect‑based success flow.

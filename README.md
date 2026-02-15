@@ -2,31 +2,27 @@
 
 ## Overview
 
-This project contains automated tests for the **Registration** feature of the QA Test Web App:
-
-https://qa-test-web-app.vercel.app/register.html
+This project contains automated tests for the **Registration** feature of the QA Test Web App: 
+[https://qa-test-web-app.vercel.app/register.html](https://qa-test-web-app.vercel.app/register.html)
 
 The suite includes:
 
-- Manual test design and reporting as described in the [PLAN](PLAN)
+- Manual test design described in [PLAN](PLAN)
 - Automated functional tests using **Playwright + Python**
 - Page Object Model (POM)
 - Correct handling of redirect-based success flow
+- Report test results in [REPORT](REPORT.md)
 
 The goal is to validate the correctness, usability, and robustness of the registration flow.
 
----
-
-## Tech Stack
+### Tech Stack
 
 - Python 3.10+
 - Playwright for Python
 - Pytest
 - Page Object Model (POM)
 
----
-
-## Project Structure
+### Project Structure
 ```
 qa-test
     - pages/
@@ -72,14 +68,9 @@ python -m playwright install
 
 ### Running Tests
 
-Run all tests:
+Run all tests (success and negative tests, verbose mode):
 ```bash
 pytest -v --html=reports/report.html --self-contained-html
-```
-
-Run only registration tests:
-```bash
-pytest -v tests/test_registration_*.py
 ```
 
 ### Key Implementation Details
@@ -92,27 +83,7 @@ pytest -v tests/test_registration_*.py
 The application uses native browser validation for:
 - Required fields
 - Email format
-
-Tests detect this using: 
-```python
-page.locator("input:invalid").first
-```
 This ensures accurate and fast validation checks.
-
-To avoid unnecessary waiting:
-- The Register button is clicked using a direct DOM click:
-
-```python
-self.page.evaluate("el => el.click()", self.register_button)
-```
-
-This bypasses:
-- Actionability checks
-- HTML5 validation blocking
-- Navigation waits
-
-Result: fast and stable tests.
-✔ Correct Redirect Handling
 
 Successful registration redirects to:
 ```
@@ -125,30 +96,3 @@ with page.expect_navigation(url="**/index.html?registered=true"):
     registration.submit()
 ```
 This ensures Playwright waits for the redirect correctly.
-
-What Is Tested?
-
-Positive Scenario
-- Successful registration with valid data
-- Verified via redirect to index.html?registered=true
-
-Negative Scenarios
-- Missing required fields (HTML5 validation)
-- Invalid email format (HTML5 validation)
-- Password mismatch (custom validation)
-- Terms & Conditions not checked (custom validation)
-- Invalid ZIP and phone number (custom validation)
-- Newsletter checkbox optional
-- Navigation to Login page
-
-Known Issues (Based on Test Results)
-
-The following defects were identified:
-- Invalid email formats are accepted (Bug‑001)
-- ZIP Code validation missing (Bug‑002)
-- Phone Number validation missing (Bug‑003)
-- Password mismatch not detected (Bug-004)
-
-Notes
-- The test suite is designed to be stable, fast, and easy to extend.
-- HTML5 validation behavior is intentionally respected and tested.
