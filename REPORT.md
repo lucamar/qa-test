@@ -259,7 +259,7 @@ Execution Details
 - Execution time: ~ 40 seconds
 - Browser: Chromium (headless)
 
-The HTML report created by `pytest` is saved as artifact in the project and it can be inspected under the folder [reports](reports/index.html).
+The HTML report created by `pytest` is saved as artifact in the project and it can be inspected under the folder [reports](reports/).
 
 ### Conclusion
 
